@@ -1,0 +1,130 @@
+# SKILL.md Schema — Runway
+# The enriched SKILL.md contract. Every file under /skills/<name>/SKILL.md MUST conform.
+# Read by: Blueprint Reviewer ([S] validation), scripts/generate-docs.js (docs auto-generation),
+#          CI plugin-structure job.
+schema: skill
+version: 0.1.0
+purpose: >
+  Defines the enriched front-matter and body structure for a Runway skill. The front-matter is
+  the single source of truth for the auto-generated Agent Reference and Command Reference docs,
+  so every field below is both a validation rule and a documentation field.
+applies_to: "skills/*/SKILL.md"
+format: markdown-with-frontmatter
+
+# ---------------------------------------------------------------------------
+# YAML front-matter (between the opening and closing `---` fences)
+# ---------------------------------------------------------------------------
+frontmatter:
+  required:
+    - name
+    - slash_command
+    - model
+    - description
+    - trigger_conditions
+    - inputs
+    - outputs
+    - errors
+    - examples
+  fields:
+    name:
+      type: string
+      required: true
+      description: Skill identifier in kebab-case. Must match the parent directory name (skills/<name>/).
+      example: brainstorm
+    slash_command:
+      type: string
+      required: true
+      pattern: "^/runway( [a-z-]+)?( \\[[a-z-]+\\])?$"
+      description: The Cowork slash command that invokes this skill, including optional argument placeholders.
+      example: "/runway brainstorm [feature]"
+    model:
+      type: enum
+      values: [opus, sonnet, haiku]
+      required: true
+      description: Anthropic model the agent runs on. Drives cost/quality trade-off per SESSION.md agent roster.
+      example: opus
+    description:
+      type: string
+      required: true
+      max_length: 200
+      description: One-sentence summary of what the skill does. Surfaces in PLUGIN.md and the docs index.
+    trigger_conditions:
+      type: list<string>
+      required: true
+      min_items: 1
+      description: When this skill should fire — explicit invocation, hook, or upstream-skill handoff.
+      example:
+        - "User runs /runway brainstorm"
+        - "init skill completes and hands off"
+    inputs:
+      type: list<object>
+      required: true
+      description: Everything the skill reads. Empty list allowed only for pure entry points.
+      item_fields:
+        name: { type: string, required: true, description: Logical name of the input. }
+        type: { type: string, required: true, description: "File / schema / artifact type (e.g. SESSION.md, attached-files, user-answer)." }
+        source: { type: string, required: true, description: Where it comes from (a path, the user, or an upstream skill). }
+        required: { type: boolean, required: true, description: Whether the skill can run without it. }
+        description: { type: string, required: false, description: Notes on the input. }
+    outputs:
+      type: list<object>
+      required: true
+      min_items: 1
+      description: Everything the skill writes. Each output names its destination file/path (exclusive write domain).
+      item_fields:
+        name: { type: string, required: true, description: Logical name of the output. }
+        type: { type: string, required: true, description: "Artifact type (e.g. PLAN.md, blueprint, DASHBOARD.md update)." }
+        destination: { type: string, required: true, description: Path the skill writes to. The (destination, field) pair is the skill's exclusive write domain. }
+        field: { type: string, required: false, description: "When a destination is co-owned, the specific field/region this skill writes (e.g. reviewed_by; 'Active Phase -> Session ID'). Omit when the skill owns the whole file." }
+        description: { type: string, required: false, description: Notes on the output. }
+    errors:
+      type: list<object>
+      required: true
+      description: Known failure modes and how the skill recovers. Empty list allowed for trivial skills.
+      item_fields:
+        code: { type: string, required: true, description: "Stable error code (e.g. E_MISSING_SESSION)." }
+        condition: { type: string, required: true, description: What triggers the error. }
+        message: { type: string, required: true, description: User-facing message. }
+        recovery: { type: string, required: true, description: What the skill or user should do next. }
+    examples:
+      type: list<object>
+      required: true
+      min_items: 1
+      description: Concrete usage scenarios. Drives the "Examples" block in the Command Reference docs.
+      item_fields:
+        title: { type: string, required: true, description: Short scenario label. }
+        scenario: { type: string, required: true, description: One or two sentences of context. }
+        command: { type: string, required: false, description: The exact invocation. }
+        result: { type: string, required: true, description: What the user sees / what gets written. }
+
+# ---------------------------------------------------------------------------
+# Markdown body (after the closing `---`)
+# ---------------------------------------------------------------------------
+body:
+  sections:
+    - name: "# <name>"
+      required: true
+      description: H1 matching the skill name; one-paragraph overview directly beneath it.
+    - name: "## Behavior"
+      required: true
+      description: Step-by-step description of what the agent does when invoked.
+    - name: "## Inputs & Outputs"
+      required: false
+      description: Prose expansion of the front-matter inputs/outputs (optional; front-matter is authoritative).
+    - name: "## Errors & Recovery"
+      required: false
+      description: Prose expansion of the front-matter errors.
+    - name: "## Examples"
+      required: false
+      description: Prose walkthrough of the front-matter examples.
+
+# ---------------------------------------------------------------------------
+# Validation rules (enforced by Blueprint Reviewer + CI plugin-structure job)
+# ---------------------------------------------------------------------------
+validation:
+  - "All `frontmatter.required` fields present and non-empty."
+  - "No unknown front-matter fields (strict)."
+  - "`name` matches the parent directory name."
+  - "`model` is one of [opus, sonnet, haiku]."
+  - "Each output's (destination, field) pair is an exclusive write domain. Two skills may write the same destination only if their `field` scopes are disjoint (e.g. plan writes the blueprint body, review writes only `reviewed_by`; Mission Control owns DASHBOARD.md, the Launcher writes only the Active-Phase Session ID cell; init seeds CLAUDE.md once)."
+  - "Body contains an H1 equal to `# <name>` and a `## Behavior` section."

@@ -1,0 +1,46 @@
+# DASHBOARD.md Schema — Runway
+# The live-status-board contract. Owned by Mission Control (atomic full rewrites). Read by Claude Code,
+# the Launcher (pre-launch checklist), resume, and the user.
+schema: dashboard
+version: 0.1.0
+purpose: >
+  Defines the live status board Mission Control rebuilds from the phase files. It is the at-a-glance
+  source of truth for what is active, done, upcoming, flagged, and which Claude Code session IDs are
+  live (for heartbeat monitoring). Never appended — always rewritten whole to avoid drift.
+applies_to: "phases/DASHBOARD.md and template/phases/DASHBOARD.md"
+format: markdown
+
+body:
+  header:
+    required: true
+    description: "H1 `# DASHBOARD` plus a `> Last updated: <date>` line."
+  sections:
+    - name: "## Active Plans"
+      required: true
+      description: Index of all active plans (PLAN.md and any PLAN_<feature>.md) with phase range and status.
+    - name: "## Active Phase"
+      required: true
+      description: >
+        Table of currently in_progress phases: Phase, Title, Status, Session ID, Started.
+        Session IDs feed Mission Control's heartbeat monitor. The Session ID cell is written by the
+        Launcher on spawn; every other cell is written by Mission Control.
+    - name: "## Completed"
+      required: true
+      description: Phases at `complete` status. "None yet." when empty.
+    - name: "## Upcoming"
+      required: true
+      description: Next pending phases with their depends_on, in dependency order.
+    - name: "## ⚠️ Flags"
+      required: true
+      description: >
+        at_risk and blocked phases with reason. "None." when empty. This is where Mission Control
+        surfaces timeouts, heartbeat gaps, and Recovery escalations to the user.
+  optional_sections:
+    - name: "## Notes"
+      description: Free-form notes (e.g. parallel-session decisions).
+
+validation:
+  - "Header present with a Last-updated line."
+  - "All five required sections present."
+  - "\"## ⚠️ Flags\" present even when empty."
+  - "Mission Control writes the full board (atomic rewrite, no append); the sole exception is the Active-Phase Session ID cell, which the Launcher may write directly as a heartbeat handoff. Claude Code never writes it."

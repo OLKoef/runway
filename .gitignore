@@ -1,0 +1,41 @@
+# ---- Node ----
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm/
+
+# ---- Python (used by the CI YAML-validation / fixture jobs) ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# ---- Env / secrets ----
+.env
+.env.*
+!.env.example
+
+# ---- OS / editor cruft ----
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# ---- Claude Code local overrides (shared .claude/settings.json stays tracked) ----
+.claude/settings.local.json
+
+# ---- Test / coverage output ----
+coverage/
+.nyc_output/
+
+# ---- MkDocs build output (Phase 12) ----
+# NOTE: site/docs/ is the docs SOURCE (committed, incl. generated agents.md) — do NOT ignore it.
+# MkDocs `build` output should target a separate dir (e.g. _site/); ignore that here.
+_site/
+.cache/

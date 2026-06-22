@@ -1,0 +1,94 @@
+# PHASE Schema — Runway
+# The phase-block contract. Each phase entry in PLAN.md (and each standalone phase file) MUST conform.
+# Read by: Orchestration Agent (writes), Planning Agent, Launcher (pre-launch checklist),
+#          Mission Control (DASHBOARD.md build), Recovery Agent.
+schema: phase
+version: 0.1.0
+purpose: >
+  Defines the YAML front-matter for a single build phase. Phase blocks are the coordination bus:
+  status transitions and writes_to domains are how agents stay out of each other's way without
+  any direct messaging.
+applies_to:
+  - "phases/PLAN.md (one fenced ```yaml block per phase)"
+  - "phases/PHASE_*.md (standalone phase files)"
+format: yaml
+
+frontmatter:
+  required:
+    - id
+    - title
+    - status
+    - depends_on
+    - writes_to
+    - assigned_to
+    - risk_level
+  fields:
+    id:
+      type: string
+      required: true
+      pattern: "^PHASE_[0-9]+[a-z]?$"
+      description: Unique phase id. Suffix letters denote splits (e.g. PHASE_10a, PHASE_10b).
+      example: PHASE_00
+    title:
+      type: string
+      required: true
+      description: Short human-readable phase title.
+    status:
+      type: enum
+      values: [pending, in_progress, complete, blocked, at_risk]
+      required: true
+      default: pending
+      description: >
+        Lifecycle state. pending → in_progress → complete on the happy path.
+        at_risk set by Mission Control (timeout/heartbeat gap); blocked set by Recovery escalation.
+    depends_on:
+      type: list<string>
+      required: true
+      description: Phase ids that must reach `complete` before this phase may start. Forms a DAG (no cycles).
+    writes_to:
+      type: list<string>
+      required: true
+      min_items: 1
+      description: >
+        Exclusive write domain — the files/dirs this phase may modify. Two phases with overlapping
+        writes_to may NOT run in parallel (Mission Control's conflict check).
+    started_at:
+      type: string|null
+      required: false
+      default: null
+      description: ISO date/time the phase entered in_progress.
+    completed_at:
+      type: string|null
+      required: false
+      default: null
+      description: ISO date/time the phase reached complete.
+    assigned_to:
+      type: string
+      required: true
+      default: claude_code
+      description: Executor (claude_code) or the agent responsible for the phase.
+    risk_level:
+      type: enum
+      values: [low, medium, high]
+      required: true
+      description: Planning/execution risk. Informs review depth and parallelization caution.
+
+body:
+  description: >
+    In PLAN.md and standalone phase files, the YAML block is followed by markdown:
+    a `### Description` paragraph and an `### Acceptance criteria` checklist.
+  sections:
+    - name: "### Description"
+      required: true
+      description: One paragraph on what the phase produces and why.
+    - name: "### Acceptance criteria"
+      required: true
+      description: GitHub-style `- [ ]` checklist. Claude Code ticks each as it completes the work.
+
+validation:
+  - "All `frontmatter.required` fields present."
+  - "`status` is one of the enum values."
+  - "`risk_level` is one of [low, medium, high]."
+  - "`depends_on` references only ids that exist in the plan; the full graph is acyclic."
+  - "`writes_to` is non-empty."
+  - "A phase may not be marked `complete` with unticked acceptance criteria."

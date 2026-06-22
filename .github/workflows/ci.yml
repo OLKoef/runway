@@ -1,0 +1,161 @@
+name: CI
+
+# Runway CI — four jobs, per PHASE_00 acceptance criteria:
+#   1. unit-tests        — unit test per skill (full harness lands in PHASE_13)
+#   2. fixture-e2e       — replay tests/FIXTURE.yaml through the pipeline (full replay lands in PHASE_13)
+#   3. plugin-structure  — schemas valid YAML; PLUGIN.md <-> skills/ bijective; SKILL.md schema-conformant
+#   4. docs-rebuild      — `node scripts/generate-docs.js` output matches committed site/docs/
+#
+# Jobs are written to pass at the current build state and to be EXTENDED in place (not rewritten) as
+# later phases add real tests. Each job marks its PHASE_13 extension point with a TODO.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------------
+  unit-tests:
+    name: Unit tests (per skill)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Syntax-check generator
+        run: node --check scripts/generate-docs.js
+      - name: Run per-skill unit tests
+        run: |
+          # TODO(PHASE_13): one unit test per skill — known input -> validated output STRUCTURE.
+          # Until then, run any tests already present under tests/unit/ and pass if none exist.
+          if [ -d tests/unit ] && ls tests/unit/*.test.js >/dev/null 2>&1; then
+            for t in tests/unit/*.test.js; do
+              echo "running $t"
+              node "$t"
+            done
+          else
+            echo "No per-skill unit tests yet (added in PHASE_13). Skipping."
+          fi
+
+  # ---------------------------------------------------------------------------
+  fixture-e2e:
+    name: FIXTURE E2E
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install YAML parser
+        run: python -m pip install --quiet pyyaml
+      - name: Validate FIXTURE.yaml shape
+        run: |
+          python - <<'PY'
+          import sys, yaml
+          with open('tests/FIXTURE.yaml') as f:
+              fx = yaml.safe_load(f)
+          required = ['meta', 'seed_prompt', 'brainstorm_responses', 'expected_outputs']
+          missing = [k for k in required if k not in fx]
+          assert not missing, f"FIXTURE.yaml missing top-level keys: {missing}"
+          stages = fx['brainstorm_responses']
+          for s in ['stage_1_problem_purpose', 'stage_2_technical_constraints',
+                    'stage_3_scope', 'stage_4_architecture']:
+              assert s in stages, f"FIXTURE.yaml missing brainstorm stage: {s}"
+          for k in ['session_md', 'plan_md', 'blueprints', 'dashboard_md']:
+              assert k in fx['expected_outputs'], f"expected_outputs missing: {k}"
+          print("FIXTURE.yaml OK: 4 stages, expected_outputs for all 4 artifacts.")
+          PY
+      # TODO(PHASE_13): replay the fixture through the real pipeline and assert expected_outputs
+      # structurally (SESSION.md 6 sections, PLAN.md acyclic DAG, >=1 blueprint, DASHBOARD.md present).
+
+  # ---------------------------------------------------------------------------
+  plugin-structure:
+    name: Plugin structure validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install YAML parser
+        run: python -m pip install --quiet pyyaml
+      - name: All schema files are valid YAML
+        run: |
+          python - <<'PY'
+          import glob, yaml, sys
+          files = sorted(glob.glob('schemas/*.yaml'))
+          assert files, "no schema files found under schemas/"
+          for path in files:
+              with open(path) as f:
+                  yaml.safe_load(f)   # raises on invalid YAML
+              print(f"valid YAML: {path}")
+          print(f"{len(files)} schema file(s) validated.")
+          PY
+      - name: PLUGIN.md <-> skills/ bijection and SKILL.md conformance
+        run: |
+          python - <<'PY'
+          import os, re, glob, yaml
+
+          def frontmatter(path):
+              raw = open(path, encoding='utf-8').read()
+              if not raw.startswith('---'):
+                  return {}
+              end = raw.index('\n---', 3)
+              return yaml.safe_load(raw[raw.index('\n') + 1:end + 1]) or {}
+
+          if not os.path.exists('PLUGIN.md'):
+              print("PLUGIN.md not present yet (added in PHASE_01). Skipping bijection check.")
+          else:
+              plugin = frontmatter('PLUGIN.md')
+              listed = {s['name'] for s in plugin.get('skills', [])}
+              on_disk = {os.path.basename(os.path.dirname(p))
+                         for p in glob.glob('skills/*/SKILL.md')}
+              assert listed == on_disk, (
+                  f"PLUGIN.md skills != skills/ tree.\n  only in PLUGIN.md: {listed - on_disk}\n"
+                  f"  only on disk: {on_disk - listed}")
+              # Every AVAILABLE command's skill must be a listed skill; planned commands may
+              # reference a skill scaffolded in a later phase.
+              for c in plugin.get('commands', []):
+                  if c.get('status', 'available') == 'available':
+                      assert c['skill'] in listed, f"available command {c['command']} -> unknown skill {c['skill']}"
+              # Each SKILL.md has the required front-matter fields.
+              required = ['name', 'slash_command', 'model', 'description',
+                          'trigger_conditions', 'inputs', 'outputs', 'errors', 'examples']
+              for p in glob.glob('skills/*/SKILL.md'):
+                  fm = frontmatter(p)
+                  miss = [k for k in required if k not in fm]
+                  assert not miss, f"{p} missing front-matter fields: {miss}"
+                  d = os.path.basename(os.path.dirname(p))
+                  assert fm['name'] == d, f"{p}: name '{fm['name']}' != dir '{d}'"
+              print(f"PLUGIN.md <-> skills/ OK: {len(on_disk)} skills, all SKILL.md conform.")
+          PY
+
+  # ---------------------------------------------------------------------------
+  docs-rebuild:
+    name: Docs rebuild check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Regenerate docs
+        run: node scripts/generate-docs.js
+      - name: Fail if generated docs differ from committed
+        run: |
+          # Use `git status --porcelain` (not `git diff`) so the check also catches UNTRACKED new
+          # generated files — `git diff` only sees modifications to already-tracked files.
+          changes="$(git status --porcelain -- site/docs)"
+          if [ -n "$changes" ]; then
+            echo "::error::site/docs is out of date. Run 'node scripts/generate-docs.js' and commit."
+            echo "$changes"
+            git diff -- site/docs
+            exit 1
+          fi
+          echo "Generated docs match committed output."

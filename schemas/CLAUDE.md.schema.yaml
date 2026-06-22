@@ -1,0 +1,65 @@
+# CLAUDE.md Schema — Runway
+# The shared-memory-bus contract. Every Runway project has one CLAUDE.md at its root.
+# Owned by Mission Control. Read first by every agent. Claude Code MUST NOT write it.
+schema: claude_md
+version: 0.1.0
+purpose: >
+  Defines the 5-section structure of the project memory bus. Mission Control keeps it current and
+  runs compaction; the System Constants section holds every configurable default that tunes Runway's
+  behavior (revision attempts, timeouts, parallelism, compaction cadence).
+applies_to: "CLAUDE.md (project root) and template/CLAUDE.md"
+format: markdown
+
+# CLAUDE.md is prose markdown (no front-matter). The contract is its section structure.
+body:
+  sections:
+    - name: "## Project Identity"
+      required: true
+      description: Project name, one-liner, target users, selected model (Sonnet/Opus, written by /runway init), runway_version.
+    - name: "## Stack & Conventions"
+      required: true
+      description: Languages, frameworks, file/naming conventions, directory layout rules.
+    - name: "## Agent Roles & Rules"
+      required: true
+      description: >
+        The agent roster and the coordination rules — exclusive write domains, "Claude Code never
+        writes CLAUDE.md/DASHBOARD.md", file-only coordination.
+    - name: "## System Constants"
+      required: true
+      description: All configurable defaults. Every constant below MUST be present with a value.
+      constants:
+        max_revision_attempts:
+          type: integer
+          default: 3
+          description: Max attempts on any revision loop (Blueprint Reviewer, Recovery Agent) before escalation.
+        phase_timeout_minutes:
+          type: integer
+          default: 30
+          description: A phase in_progress beyond this is flagged at_risk by Mission Control.
+        heartbeat_gap_minutes:
+          type: integer
+          default: 10
+          description: If Claude Code hooks stop firing for longer than this, Mission Control triggers Recovery.
+        parallel_session_cap:
+          type: integer
+          default: 2
+          description: Max concurrent Claude Code sessions. Mission Control checks rate limits before a 2nd.
+        compaction_interval_phases:
+          type: integer
+          default: 5
+          description: Mission Control compacts CLAUDE.md every N completed phases (or when it exceeds ~2000 words).
+        git_integration:
+          type: boolean
+          default: false
+          description: Whether Runway commits/branches automatically. Off by default.
+    - name: "## Current Status"
+      required: true
+      description: Pointer to the active phase and DASHBOARD.md; short "where we are" note. Compacted history moves to ## History.
+    - name: "## History"
+      required: false
+      description: Appended by Mission Control's compaction pass — summarized completed-phase history.
+
+validation:
+  - "All five required sections present in order."
+  - "\"## System Constants\" contains every constant in `constants` with a concrete value."
+  - "Mission Control writes this file during normal operation; the only other writer is /runway init, which performs a one-time seed write of the Project Identity Model field at project creation. Claude Code never writes it."

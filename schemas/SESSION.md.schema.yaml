@@ -1,0 +1,47 @@
+# SESSION.md Schema — Runway
+# The brainstorm-output contract. Produced by the Brainstorm Agent, consumed by Orchestration.
+# Read by: Orchestration Agent (validates all 6 sections present before generating PLAN.md), CI FIXTURE E2E.
+schema: session
+version: 0.1.0
+purpose: >
+  Defines the 6-section spec document that grounds every downstream agent. The Brainstorm Agent fills
+  it progressively (one section per Q&A stage). Orchestration refuses to run if any required section
+  is missing. The brainstorm/SESSION.md in this repo is the canonical example.
+applies_to: "brainstorm/SESSION.md and template/brainstorm/SESSION.md"
+format: markdown
+
+body:
+  header:
+    required: true
+    description: "H1 `# PROJECT: <name>` followed by a blockquote: `> Runway session — <date> | Model: <model>`."
+  sections:
+    - name: "## Problem & Purpose"
+      required: true
+      stage: 1
+      description: One-liner, Problem, Target users, Success looks like. Written in Stage 1 of brainstorm.
+    - name: "## Technical Constraints"
+      required: true
+      stage: 2
+      description: Stack, Hard constraints, Existing codebase. Written in Stage 2.
+    - name: "## Scope"
+      required: true
+      stage: 3
+      description: v1 (must-have), v2+ (nice-to-have), Out of scope subsections. Written in Stage 3.
+    - name: "## Architecture"
+      required: true
+      stage: 4
+      description: Structure, Key patterns, Integrations, agent/component roster, slash commands. Written in Stage 4.
+    - name: "## ⚠️ Flags"
+      required: true
+      description: >
+        Unresolved tensions. "None — all tensions resolved during brainstorm." if empty. Orchestration
+        turns each remaining flag into a dedicated resolution phase (it does not block).
+    - name: "## Clarifications"
+      required: true
+      description: Resolved tensions and the decisions made, with rationale. Written as pushback is resolved.
+
+validation:
+  - "Header present with project name, date, and model."
+  - "All six `##` sections present, in order."
+  - "\"## ⚠️ Flags\" present even when empty (explicit \"None\" line)."
+  - "Document is finalized/locked only after the Stage-4 spec review gate (user confirmation)."

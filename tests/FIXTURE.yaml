@@ -1,0 +1,120 @@
+# FIXTURE.yaml — Runway end-to-end test fixture
+# =============================================================================
+# A full, pre-baked brainstorm session for a sample project ("Pocket"). The CI
+# FIXTURE E2E job (PHASE_13) replays this through the pipeline and asserts the
+# expected_outputs STRUCTURALLY — never content-exact. The point is to prove the
+# pipeline produces well-formed, schema-conforming artifacts, not to pin exact prose.
+#
+# Format contract:
+#   meta                 — fixture identity
+#   seed_prompt          — the rough idea a user starts with (/runway init)
+#   attached_inputs      — files ingested at init (markdown after conversion)
+#   brainstorm_responses — scripted user answers for all 4 stages + pushback turns
+#   expected_outputs     — structural assertions per produced artifact
+# =============================================================================
+
+meta:
+  fixture: pocket-cli
+  version: 0.1.0
+  description: >
+    A solo dev wants a tiny command-line expense tracker. Exercises every brainstorm stage,
+    one contradiction-pushback turn, and a clean (no-unresolved-flags) handoff to Orchestration.
+  conforms_to:
+    session: schemas/SESSION.md.schema.yaml
+    plan: schemas/PHASE.schema.yaml
+    blueprint: schemas/BLUEPRINT.schema.yaml
+    dashboard: schemas/DASHBOARD.md.schema.yaml
+
+seed_prompt: >
+  I want a small command-line tool to track my personal expenses. I add an expense with a category
+  and amount, and I can see a monthly summary. Local only, no accounts.
+
+attached_inputs: []   # none for this fixture; init's ingestion path is unit-tested separately
+
+brainstorm_responses:
+  entry_path: from_scratch   # the other path is `paste_existing`; both must yield a valid SESSION.md
+
+  stage_1_problem_purpose:
+    anchor_question: "What problem does this solve, and who is it for?"
+    user_response: >
+      I lose track of small daily spending. I want a fast CLI to log an expense in one command and
+      see where my money went this month. It's just for me — a solo developer comfortable in a terminal.
+    followups:
+      - q: "What does success look like?"
+        a: "I actually log expenses because it's faster than opening an app, and the monthly summary is accurate."
+
+  stage_2_technical_constraints:
+    anchor_question: "Any stack or hard constraints?"
+    user_response: >
+      Python, single file if possible. Data in a local SQLite file. No network, no cloud, no login.
+      Should run on macOS and Linux.
+    followups:
+      - q: "How should data persist between runs?"
+        a: "A SQLite DB in ~/.pocket/pocket.db, created on first run."
+
+  stage_3_scope:
+    anchor_question: "What's in v1 versus later?"
+    user_response: >
+      v1: add expense, list expenses, monthly summary by category. Later: budgets, CSV export, charts.
+      Out of scope: multi-user, sync, mobile.
+
+  stage_4_architecture:
+    anchor_question: "How should it be structured?"
+    user_response: >
+      One CLI entry point with subcommands (add, list, summary). A thin storage layer over SQLite.
+      Argument parsing with argparse. No external dependencies beyond the standard library.
+    # NOTE: both sides of the tension are now on the table — single-file (Stage 2) vs. a layered
+    # storage/CLI structure (this answer) — so the agent issues pushback (see pushback_turns) before
+    # the Stage-4 review gate locks the spec.
+
+  pushback_turns:
+    - tension: "Single-file constraint vs. a clean storage layer + CLI separation."
+      agent_pushback: >
+        You asked for a single file but also a separated storage layer and CLI layer. Those are in
+        mild tension. Single-file is fine for v1 — the layers can be functions/classes within one
+        module. Confirm: keep it one file with internal separation?
+      user_resolution: "Yes, one file, internal separation. Split into modules only if it grows."
+      records_to: clarifications
+
+expected_outputs:
+  session_md:
+    must_exist: true
+    required_sections:
+      - "## Problem & Purpose"
+      - "## Technical Constraints"
+      - "## Scope"
+      - "## Architecture"
+      - "## ⚠️ Flags"
+      - "## Clarifications"
+    assertions:
+      - "header matches '# PROJECT: <name>' with a model line"
+      - "Clarifications section contains the single-file-vs-layers resolution"
+      - "Flags section present (expected: 'None' — tension was resolved)"
+
+  plan_md:
+    must_exist: true
+    assertions:
+      - "at least 3 phases"
+      - "every phase block conforms to PHASE.schema.yaml (required front-matter fields present)"
+      - "depends_on graph is acyclic (no cycles)"
+      - "PHASE_00-equivalent or first phase has empty depends_on"
+      - "every depends_on id references a phase that exists in the plan"
+
+  blueprints:
+    must_exist: true
+    assertions:
+      - "at least 1 blueprint generated under phases/blueprints/"
+      - "each blueprint conforms to BLUEPRINT.schema.yaml"
+      - "toc[] and files[].path are in bijective correspondence"
+      - "every [L] file has all 5 spec fields non-empty"
+
+  dashboard_md:
+    must_exist: true
+    required_sections:
+      - "## Active Plans"
+      - "## Active Phase"
+      - "## Completed"
+      - "## Upcoming"
+      - "## ⚠️ Flags"
+
+validation_mode: structural   # NEVER content-exact — assertions check shape, sections, and graph validity

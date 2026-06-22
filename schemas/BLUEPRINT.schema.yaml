@@ -1,0 +1,86 @@
+# BLUEPRINT Schema — Runway
+# The file-level blueprint contract produced by the Planning Agent, validated by the Blueprint Reviewer.
+# One blueprint per phase: phases/blueprints/PHASE_<id>_blueprint.md
+schema: blueprint
+version: 0.1.0
+purpose: >
+  Defines the per-phase blueprint the Launcher hands to Claude Code. Every file the phase touches is
+  classified [S] structural (deterministic — embedded content) or [L] logic (behavioral — a 5-field spec).
+  Claude Code copies [S] content verbatim and implements [L] specs.
+applies_to: "phases/blueprints/PHASE_*_blueprint.md"
+format: markdown-with-frontmatter
+
+frontmatter:
+  required:
+    - phase_id
+    - toc
+    - files
+  fields:
+    phase_id:
+      type: string
+      required: true
+      pattern: "^PHASE_[0-9]+[a-z]?$"
+      description: Must match the id of the phase this blueprint plans (Reviewer cross-checks).
+    reviewed_by:
+      type: string
+      required: false
+      description: >
+        Set to `blueprint-reviewer` by the Reviewer on approval. The Launcher's pre-launch checklist
+        refuses to spawn Claude Code unless this is present.
+    toc:
+      type: list<string>
+      required: true
+      min_items: 1
+      description: >
+        Table of contents — every file path the blueprint covers, in build order. Must be in
+        bijective correspondence with `files[].path` (every toc entry has a files entry and vice versa).
+    files:
+      type: list<object>
+      required: true
+      min_items: 1
+      description: One entry per file the phase creates or modifies.
+      item_fields:
+        path:
+          type: string
+          required: true
+          description: Path of the file relative to project root.
+        type:
+          type: enum
+          values: [structural, logic]
+          required: true
+          description: "[S] structural (embedded content) or [L] logic (spec). Drives which of content/spec is required."
+        schema:
+          type: string
+          required: false
+          description: "For [S] files, the /schemas/ file the content must conform to (e.g. SKILL.md.schema.yaml)."
+        content:
+          type: string
+          required: "when type == structural"
+          description: The exact, complete content for a structural file. Claude Code writes it verbatim.
+        spec:
+          type: object
+          required: "when type == logic"
+          description: The 5-field behavioral spec for a logic file. ALL five fields required and non-empty.
+          fields:
+            purpose: { type: string, required: true, description: What this file/skill is for. }
+            inputs: { type: string, required: true, description: What it reads and from where. }
+            behavior: { type: string, required: true, description: Step-by-step what it does. }
+            constraints: { type: string, required: true, description: Hard rules, limits, things it must not do. }
+            interface: { type: string, required: true, description: Public surface — commands, exports, file contract. }
+
+body:
+  sections:
+    - name: "# Blueprint — <phase_id>"
+      required: true
+      description: H1 and a short orientation paragraph.
+    - name: "## Files"
+      required: true
+      description: Per-file sections; [S] files embed a fenced content block, [L] files list the 5 spec fields.
+
+validation:
+  - "All `frontmatter.required` fields present; no unknown front-matter fields."
+  - "`phase_id` matches the phase under review."
+  - "`toc` and `files[].path` are in bijective correspondence."
+  - "Every `type: structural` file has non-empty `content`; if `schema` is set, content conforms to it."
+  - "Every `type: logic` file has a `spec` with all 5 fields (purpose, inputs, behavior, constraints, interface) non-empty."
+  - "`reviewed_by: blueprint-reviewer` is written only after all checks pass."
