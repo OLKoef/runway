@@ -3,6 +3,18 @@
 All notable changes during the manual v1 build of Runway. One entry per completed phase.
 Format: phase id + title, the files it produced, and the date. Newest first.
 
+## [PHASE_03] brainstorm skill — 2026-06-22
+Implemented the Brainstorm Agent — the full SKILL.md body for `skills/brainstorm/`.
+
+- 8-step engine: both-path entry (paste vs from-scratch, converging on one SESSION.md); 4 adaptive stages (Problem & Purpose → Technical Constraints → Scope → Architecture) with one anchor question each and capped follow-ups; continuous contradiction pushback that blocks stage progression and settles via resolve→Clarifications XOR accept→⚠️ Flags (never loops); progressive SESSION.md writer (SESSION.md.schema.yaml-conformant); Stage-4 review gate that locks the spec; mid-project diff-mode re-run.
+- Adversarial-review fixes: corrected two cross-reference bugs (mid-project routed to the review gate instead of diff mode; paste path cited the writer instead of the gate); broadened the `init_context` input to declare the Project Identity → Model read that populates the SESSION.md header.
+
+## [PHASE_02] init skill — 2026-06-22
+Implemented the `/runway init` entry point — the full SKILL.md body for `skills/init/`.
+
+- 7-step playbook: welcome → project-mode detection (greenfield vs existing, with a re-init guard) → model picker → non-overwriting template writer → file ingestion (PDF/DOCX/image/text → `brainstorm/input/`) → one-time CLAUDE.md seed → brainstorm handoff. Enriched frontmatter (3 inputs, 4 outputs, 3 errors).
+- Adversarial-review fixes: made `E_ALREADY_INITIALIZED` an early precedence guard (was unreachable behind the "any found" branch); trimmed the CLAUDE.md seed to exactly its two declared fields (Model + Current Status init note), deferring Project Identity Name/one-liner to Mission Control; aligned the CLAUDE.md schema's seed-domain description to match.
+
 ## [PHASE_01] Plugin scaffold — 2026-06-22
 Created the plugin definition, skill stubs, and the project template tree.
 

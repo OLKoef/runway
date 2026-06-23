@@ -17,20 +17,21 @@
 |---|---|---|
 | PHASE_00 | Foundation | 2026-06-22 |
 | PHASE_01 | Plugin scaffold | 2026-06-22 |
+| PHASE_02 | init skill | 2026-06-22 |
+| PHASE_03 | brainstorm skill | 2026-06-22 |
 
 ## Upcoming
 | Phase | Title | Depends on |
 |---|---|---|
-| PHASE_02 | init skill | PHASE_01 |
-| PHASE_03 | brainstorm skill | PHASE_01 |
+| PHASE_04 | orchestrate skill | PHASE_02, PHASE_03 (both complete → unblocked) |
 | PHASE_12a | docs site skeleton | PHASE_01 (parallel) |
-| PHASE_04 | orchestrate skill | PHASE_02, PHASE_03 |
+| PHASE_05 | plan skill | PHASE_04 |
+| PHASE_06 | review skill | PHASE_05 |
 
 ## ⚠️ Flags
 _None._
 
 ## Notes
 - This board tracks the **manual v1 build of Runway itself** (dogfooding target: v2 built with Runway).
-- **Next:** PHASE_02 (init) + PHASE_03 (brainstorm) are parallel-eligible — disjoint write domains
-  (`skills/init/` vs `skills/brainstorm/`), within `parallel_session_cap: 2`. PHASE_12a (docs skeleton)
-  is also unblocked and independent.
+- **Next:** PHASE_04 (`orchestrate`) is now unblocked — its dependencies (PHASE_02 init + PHASE_03 brainstorm)
+  are both complete. PHASE_12a (docs skeleton) remains independently available.

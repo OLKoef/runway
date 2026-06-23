@@ -24,10 +24,10 @@ jobs:
     name: Unit tests (per skill)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Syntax-check generator
         run: node --check scripts/generate-docs.js
       - name: Run per-skill unit tests
@@ -48,8 +48,8 @@ jobs:
     name: FIXTURE E2E
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
       - name: Install YAML parser
@@ -79,8 +79,8 @@ jobs:
     name: Plugin structure validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
       - name: Install YAML parser
@@ -141,10 +141,10 @@ jobs:
     name: Docs rebuild check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Regenerate docs
         run: node scripts/generate-docs.js
       - name: Fail if generated docs differ from committed

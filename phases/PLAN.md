@@ -121,13 +121,13 @@ Creates the plugin definition, all 8 SKILL.md stubs conforming to the schema fro
 ```yaml
 id: PHASE_02
 title: init skill
-status: pending
+status: complete
 depends_on:
   - PHASE_01
 writes_to:
   - skills/init/SKILL.md
-started_at: null
-completed_at: null
+started_at: 2026-06-22
+completed_at: 2026-06-22
 assigned_to: claude_code
 risk_level: medium
 ```
@@ -136,26 +136,26 @@ risk_level: medium
 Implements the `/runway init` skill. Entry point for all new projects. Handles file ingestion, model selection, project detection, and template writing. Parallel-eligible with Phase 03.
 
 ### Acceptance criteria
-- [ ] File ingestion pipeline — detects attached files (PDF, DOCX, image, text), converts each to markdown, writes to `brainstorm/input/[filename].md`
-- [ ] Model picker — presents Sonnet vs Opus choice; writes selection to CLAUDE.md Project Identity section
-- [ ] Welcome message — one short paragraph: what Runway does, what's about to happen, what the output will be
-- [ ] Template writer — copies `/template/` tree into user's project directory (respects existing files, doesn't overwrite)
-- [ ] Existing project detection — checks for CLAUDE.md or structure.md in project root; switches to "existing project mode" if found: reads CLAUDE.md + README + structure.md (or generates directory listing), adjusts Brainstorm Agent opening question
-- [ ] Triggers brainstorm skill on completion
-- [ ] SKILL.md fully conforming to enriched schema (all 8 frontmatter fields populated)
+- [x] File ingestion pipeline — detects attached files (PDF, DOCX, image, text), converts each to markdown, writes to `brainstorm/input/[filename].md`
+- [x] Model picker — presents Sonnet vs Opus choice; writes selection to CLAUDE.md Project Identity section
+- [x] Welcome message — one short paragraph: what Runway does, what's about to happen, what the output will be
+- [x] Template writer — copies `/template/` tree into user's project directory (respects existing files, doesn't overwrite)
+- [x] Existing project detection — checks for CLAUDE.md or structure.md in project root; switches to "existing project mode" if found: reads CLAUDE.md + README + structure.md (or generates directory listing), adjusts Brainstorm Agent opening question
+- [x] Triggers brainstorm skill on completion
+- [x] SKILL.md fully conforming to enriched schema (all 8 frontmatter fields populated)
 
 ---
 
 ```yaml
 id: PHASE_03
 title: brainstorm skill
-status: pending
+status: complete
 depends_on:
   - PHASE_01
 writes_to:
   - skills/brainstorm/SKILL.md
-started_at: null
-completed_at: null
+started_at: 2026-06-22
+completed_at: 2026-06-22
 assigned_to: claude_code
 risk_level: high
 ```
@@ -164,15 +164,15 @@ risk_level: high
 Implements the Brainstorm Agent. The most complex skill — adaptive Q&A engine, pushback behavior, both-path entry, spec review gate, mid-project re-run support. Parallel-eligible with Phase 02.
 
 ### Acceptance criteria
-- [ ] 4-stage adaptive Q&A engine: Problem & Purpose → Technical Constraints → Scope → Architecture
-- [ ] Adaptive pacing — each stage opens with one anchor question; agent decides whether to follow up based on answer depth
-- [ ] Both-path entry — at start: "Paste existing spec or answer from scratch?" — both paths lead to the same SESSION.md output
-- [ ] Contradiction pushback — agent names tensions explicitly, flags unrealistic expectations, blocks stage progression until resolved
-- [ ] Resolved tensions written to SESSION.md `## Clarifications` section
-- [ ] SESSION.md progressive writer — adds one section per stage as conversation moves forward; document fills in progressively
-- [ ] Spec review gate — after Stage 4: agent summarizes full spec → user confirms → SESSION.md finalized and locked for Orchestration
-- [ ] Mid-project re-run support — `/runway brainstorm [feature]`: reads existing SESSION.md, enters diff mode, shows what changed, appends or updates relevant sections
-- [ ] SKILL.md fully conforming to enriched schema
+- [x] 4-stage adaptive Q&A engine: Problem & Purpose → Technical Constraints → Scope → Architecture
+- [x] Adaptive pacing — each stage opens with one anchor question; agent decides whether to follow up based on answer depth
+- [x] Both-path entry — at start: "Paste existing spec or answer from scratch?" — both paths lead to the same SESSION.md output
+- [x] Contradiction pushback — agent names tensions explicitly, flags unrealistic expectations, blocks stage progression until resolved
+- [x] Resolved tensions written to SESSION.md `## Clarifications` section
+- [x] SESSION.md progressive writer — adds one section per stage as conversation moves forward; document fills in progressively
+- [x] Spec review gate — after Stage 4: agent summarizes full spec → user confirms → SESSION.md finalized and locked for Orchestration
+- [x] Mid-project re-run support — `/runway brainstorm [feature]`: reads existing SESSION.md, enters diff mode, shows what changed, appends or updates relevant sections
+- [x] SKILL.md fully conforming to enriched schema
 
 ---
 
