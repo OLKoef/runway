@@ -179,14 +179,14 @@ Implements the Brainstorm Agent. The most complex skill — adaptive Q&A engine,
 ```yaml
 id: PHASE_04
 title: orchestrate skill
-status: pending
+status: complete
 depends_on:
   - PHASE_02
   - PHASE_03
 writes_to:
   - skills/orchestrate/SKILL.md
-started_at: null
-completed_at: null
+started_at: 2026-06-23
+completed_at: 2026-06-23
 assigned_to: claude_code
 risk_level: medium
 ```
@@ -195,14 +195,14 @@ risk_level: medium
 Implements the Orchestration Agent. Reads SESSION.md and generates PLAN.md with a phase dependency graph. Handles unresolved flags and dual-mode plan approval.
 
 ### Acceptance criteria
-- [ ] SESSION.md reader + parser — validates all 6 required sections present; errors if missing
-- [ ] Phase plan generator — produces PLAN.md with phases in dependency order; each phase has full YAML frontmatter per PHASE.schema.yaml
-- [ ] Dependency graph generator — `depends_on` fields form a valid DAG (no circular dependencies)
-- [ ] Unresolved ⚠️ Flags handler — for each flag in SESSION.md, generates a dedicated "resolution phase" before the affected implementation phases
-- [ ] PLAN.md writer — writes to `phases/PLAN.md` with human-readable phase descriptions + YAML frontmatter
-- [ ] Dual-mode plan approval: (a) user edits PLAN.md directly, OR (b) user describes changes in natural language → Orchestration re-validates dependency graph after either path
-- [ ] Plan versioning logic — small additions (≤3 phases, no new dependencies on existing phases) append to PLAN.md under new section; large features get `phases/PLAN_[feature].md`; DASHBOARD.md maintains index of all active plans
-- [ ] SKILL.md fully conforming to enriched schema
+- [x] SESSION.md reader + parser — validates all 6 required sections present; errors if missing
+- [x] Phase plan generator — produces PLAN.md with phases in dependency order; each phase has full YAML frontmatter per PHASE.schema.yaml
+- [x] Dependency graph generator — `depends_on` fields form a valid DAG (no circular dependencies)
+- [x] Unresolved ⚠️ Flags handler — for each flag in SESSION.md, generates a dedicated "resolution phase" before the affected implementation phases
+- [x] PLAN.md writer — writes to `phases/PLAN.md` with human-readable phase descriptions + YAML frontmatter
+- [x] Dual-mode plan approval: (a) user edits PLAN.md directly, OR (b) user describes changes in natural language → Orchestration re-validates dependency graph after either path
+- [x] Plan versioning logic — small additions (≤3 phases, no new dependencies on existing phases) append to PLAN.md under new section; large features get `phases/PLAN_[feature].md`; DASHBOARD.md maintains index of all active plans
+- [x] SKILL.md fully conforming to enriched schema
 
 ---
 
@@ -285,6 +285,7 @@ Implements the Launcher Agent. Assembles the context packet and spawns Claude Co
 ### Acceptance criteria
 - [ ] Context packet assembler — collects: approved blueprint + CLAUDE.md + DASHBOARD.md (not structure.md — too large; Claude Code reads via tools if needed)
 - [ ] Agent SDK sub-agent spawner — programmatically spawns Claude Code sub-agent with context packet as initial prompt
+- [ ] **Explicit model selection** — model must be set explicitly in every Agent SDK call; never rely on inheritance from the parent session. Use `model: opus` for Brainstorm and Planning agents; `model: sonnet` for all others. Default inheritance silently uses the parent model, which may be wrong. (Confirmed behaviour: Claude Code subagents inherit parent model if `model` field is omitted.)
 - [ ] Session ID tracker — captures session ID from Agent SDK response; writes to DASHBOARD.md for Mission Control heartbeat monitoring
 - [ ] Pre-launch checklist — verifies: blueprint has `reviewed_by` field set, all depends_on phases are `complete`, no phase flags in DASHBOARD.md blocking this phase
 - [ ] SKILL.md fully conforming to enriched schema

@@ -26,7 +26,7 @@ runway/
 ├── skills/                     # 8 SKILL.md — init + brainstorm fully implemented; 6 stubs remain
 │   ├── init/SKILL.md           #   sonnet — ✅ implemented (PHASE_02)
 │   ├── brainstorm/SKILL.md     #   opus   — ✅ implemented (PHASE_03)
-│   ├── orchestrate/SKILL.md    #   sonnet — stub; implemented in PHASE_04
+│   ├── orchestrate/SKILL.md    #   sonnet — ✅ implemented (PHASE_04)
 │   ├── plan/SKILL.md           #   opus   — implemented in PHASE_05
 │   ├── review/SKILL.md         #   sonnet — implemented in PHASE_06
 │   ├── launch/SKILL.md         #   sonnet — implemented in PHASE_07
@@ -65,4 +65,5 @@ runway/
 - ✅ PHASE_01 Plugin scaffold — complete
 - ✅ PHASE_02 init skill — complete
 - ✅ PHASE_03 brainstorm skill — complete
-- ▶️ Next: PHASE_04 (orchestrate) — unblocked; PHASE_12a (docs skeleton) also available
+- ✅ PHASE_04 orchestrate skill — complete
+- ▶️ Next: PHASE_05 (plan) — unblocked; PHASE_12a (docs skeleton) also available
