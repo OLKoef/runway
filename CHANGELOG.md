@@ -3,6 +3,13 @@
 All notable changes during the manual v1 build of Runway. One entry per completed phase.
 Format: phase id + title, the files it produced, and the date. Newest first.
 
+## [PHASE_04] orchestrate skill — 2026-06-23
+Implemented the Orchestration Agent — the full SKILL.md body for `skills/orchestrate/`.
+
+- 8-step body: validate SESSION.md (6 sections) → derive phases (each conforming to PHASE.schema.yaml) → convert unresolved ⚠️ Flags into resolution phases wired ahead of their dependents → build + validate the dependency DAG (cycle detection, existence checks, parallel-group detection) → write PLAN.md (header / Dependency Graph / Phases / Summary) → dual-mode approval with re-validation → plan versioning (≤3-phase append vs `phases/PLAN_[feature].md`) → handoff to `/runway plan`.
+- Write-domain decision: orchestrate owns `phases/PLAN.md` + `PLAN_[feature].md` and does **not** write DASHBOARD.md — Mission Control maintains the Active Plans index by scanning plan files (keeps DASHBOARD single-writer, consistent with the field-granular model).
+- Adversarial-review fixes (2 confirmed): the flag-resolution step now wires an explicit `depends_on` edge (execution is DAG-driven, not positional); the frontmatter now declares the `schemas/` input read in step 1 (matching the `plan`/`review` convention).
+
 ## [PHASE_03] brainstorm skill — 2026-06-22
 Implemented the Brainstorm Agent — the full SKILL.md body for `skills/brainstorm/`.
 
