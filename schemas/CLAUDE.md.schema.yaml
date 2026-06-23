@@ -62,4 +62,4 @@ body:
 validation:
   - "All five required sections present in order."
   - "\"## System Constants\" contains every constant in `constants` with a concrete value."
-  - "Mission Control writes this file during normal operation; the only other writer is /runway init, which performs a one-time seed write of the Project Identity Model field at project creation. Claude Code never writes it."
+  - "Mission Control writes this file during normal operation; the only other writer is /runway init, which performs the one-time seed writes (Project Identity Model field + a Current Status init note) at project creation. Claude Code never writes it."
